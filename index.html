@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>SHOHIB SERUMPUN - Cek Keaktifan</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .result { margin-top: 20px; }
+    .aktif { color: green; font-weight: bold; }
+    .tidak-aktif { color: red; font-weight: bold; }
+    img { margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Cek Keaktifan Kendaraan SHOHIB SERUMPUN</h2>
+  <input type="text" id="searchInput" placeholder="Masukkan Nomor Kendaraan">
+  <button onclick="searchData()">Cari</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSnnk04zux7UGAmTeZDtD3mZCuMe4VVvPVF4VK25opYz6EvKrBKhO9QvMG09o_tIJ4ggHuhsZPb-JI/pub?output=csv';
+
+    async function fetchData() {
+      const response = await fetch(sheetURL);
+      const data = await response.text();
+      const rows = data.split('\n').slice(1).map(row => row.split(','));
+      return rows;
+    }
+
+    function formatDate(dateStr) {
+      const parts = dateStr.trim().split('/');
+      if (parts.length !== 3) return new Date(0);
+      const [day, month, year] = parts;
+      return new Date(`${year}-${month}-${day}`);
+    }
+
+    async function searchData() {
+      const input = document.getElementById('searchInput').value.trim().toUpperCase();
+      const data = await fetchData();
+      const resultDiv = document.getElementById('result');
+      const now = new Date();
+
+      const row = data.find(r => r[2].trim().toUpperCase() === input); // Kolom 2 = Nomor Kendaraan
+
+      if (row) {
+        const nama = row[0];
+        const alamat = row[1];
+        const nomor = row[2];
+        const masaBerlaku = row[3];
+        const fotoSIM = row[4];
+        const tanggalSIM = formatDate(masaBerlaku);
+        const status = tanggalSIM >= now ? 'AKTIF' : 'TIDAK AKTIF';
+
+        resultDiv.innerHTML = `
+          <p><strong>Nama:</strong> ${nama}</p>
+          <p><strong>Alamat:</strong> ${alamat}</p>
+          <p><strong>Nomor Kendaraan:</strong> ${nomor}</p>
+          <p><strong>Masa Berlaku SIM:</strong> ${masaBerlaku}</p>
+          <p><strong>Status:</strong> <span class="${status === 'AKTIF' ? 'aktif' : 'tidak-aktif'}">${status}</span></p>
+          <p><strong>Foto SIM:</strong><br><img src="${fotoSIM}" width="200" alt="Foto SIM"></p>
+        `;
+      } else {
+        resultDiv.innerHTML = '<p>Data tidak ditemukan untuk nomor kendaraan tersebut.</p>';
+      }
+    }
+  </script>
+</body>
+</html>
